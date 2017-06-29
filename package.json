@@ -1,0 +1,18 @@
+{
+  "name": "jwt-playground",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "concurrently \"cross-env SECRET=loremipsum nodemon server.js\" \"open http://localhost:3000\""
+  },
+  "repository": "git@github.com:rkrupinski/jwt-playground.git",
+  "dependencies": {
+    "body-parser": "^1.17.2",
+    "express": "^4.15.3",
+    "jsonwebtoken": "^7.4.1"
+  },
+  "devDependencies": {
+    "concurrently": "^3.5.0",
+    "cross-env": "^5.0.1",
+    "nodemon": "^1.11.0"
+  }
+}

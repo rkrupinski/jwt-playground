@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+  <div id="login-container">
+    <label for="username">Username:</label>
+    <input type="text" id="username">
+    <button id="login">Log in</button>
+  </div>
+
+  <button id="logout">Log out</button>
+  <button id="request">Request data</button>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const loginContainer = document.querySelector('#login-container');
+      const loginBtn = document.querySelector('#login');
+      const userInput = document.querySelector('#username');
+      const logoutBtn = document.querySelector('#logout');
+      const requestBtn = document.querySelector('#request');
+
+      loginBtn.addEventListener('click', login);
+      logoutBtn.addEventListener('click', logout);
+      requestBtn.addEventListener('click', request);
+
+      updateTheUI();
+
+      function login() {
+        const username = userInput.value;
+
+        userInput.value = '';
+
+        username && loginRequest(username)
+            .then(processResponse)
+            .then(storeToken)
+            .then(updateTheUI);
+      }
+
+      function logout() {
+        localStorage.removeItem('token');
+        updateTheUI();
+      }
+
+      function request() {
+        dataRequest()
+            .then(processResponse)
+            .then(({ data }) => alert(JSON.stringify(data, null, 2)))
+            .catch(({ status }) => {
+              if (status === 403) {
+                logout();
+              }
+            });
+      }
+
+      function loginRequest(username) {
+        return fetch('/login', {
+          method: 'post',
+          body: JSON.stringify({
+            username,
+          }),
+          headers: {
+            'content-type': 'application/json',
+          },
+        });
+      }
+
+      function dataRequest() {
+        const headers = {
+          'content-type': 'application/json',
+        };
+
+        let token;
+
+        if (token = getToken()) {
+          headers.token = token;
+        }
+
+        return fetch('/data', { headers });
+      }
+
+      function storeToken({ data }) {
+        const { token } = data;
+
+        token && localStorage.setItem('token', token); // ¯\_(ツ)_/¯
+      }
+
+      function getToken() {
+        return localStorage.getItem('token');
+      }
+
+      function isAuthenticated() {
+        return !!getToken();
+      }
+
+      function toggleVisibility(el, visible) {
+        el[visible ? 'removeAttribute' : 'setAttribute']('hidden', '');
+      }
+
+      function updateTheUI() {
+        if (isAuthenticated()) {
+          toggleVisibility(loginContainer, false);
+          toggleVisibility(logoutBtn, true);
+          toggleVisibility(requestBtn, true);
+        } else {
+          toggleVisibility(loginContainer, true);
+          toggleVisibility(logoutBtn, false);
+          toggleVisibility(requestBtn, false);
+        }
+      }
+
+      function processResponse(res) {
+        const { status, headers } = res;
+
+        return res.json()
+            .then(function (data) {
+              const ammendedResponse = {
+                status,
+                headers,
+                data,
+              };
+
+              return (status >= 200 && status < 300) ?
+                  ammendedResponse :
+                  Promise.reject(ammendedResponse);
+            });
+      }
+    }());
+  </script>
+</body>
+</html>
